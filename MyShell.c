@@ -19,6 +19,9 @@ prompt.
 */
 int execute(char **args)
 {
+  printf("args in exe 0 = %s\n", args[0]);
+  printf("args in exe 1 = %s\n", args[1]);
+
   printf("MYSHELL (pid:%d)\n", (int) getpid());
     int rc = fork();
     if (rc < 0) {
@@ -46,29 +49,42 @@ Prepares the arguments for execvp
 char** parse(void)
 {
   char **args;
-  args = (char **) malloc(3);
-  args[0] = (char *) malloc(100);
-  args[1] = (char *) malloc(100);
-  args[2] = (char *) malloc(100);
-
+  args = (char **) malloc(64);
+  // args[0] = (char *) malloc(100);
+  // args[1] = (char *) malloc(100);
+  // args[2] = (char *) malloc(100);
+  //
   char lineIn[MAXCHAR];
-
+  //
   printf("MyShell>");
-
+  //
   fgets(lineIn, MAXCHAR, stdin);
-
+  //
   printf("This is lineIn: %s\n", lineIn);
+  //
+  // args[0] = strdup(strtok(lineIn, " "));
+  //
+  // printf("args 0 = %s\n", args[0]);
+  //
+  // args[1] = strdup(strtok(NULL, " "));
+  //
+  // printf("args 1 = %s\n", args[1]);
+  //
+  // args[2] = NULL;
+  int i = 0;
+  char *p = strtok(lineIn, " ");
+  while(p) {
+    args[i++] = strdup(p);
+    p = strtok(NULL, " ");
+  }
 
-  strcpy(args[0],strtok(lineIn, " "));
+  args[i] = NULL;
 
-  printf("args 0 = %s\n", args[0]);
+  for (i = 0; i < 2; i++) {
+    printf("%s\n", args[i]);
+  }
 
-  strcpy(args[1],strtok(NULL, " "));
-
-  printf("args 1 = %s\n", args[1]);
-
-  args[3] = '\0';
-
+  printf("about to return");
   return args;
 }
 /**
@@ -84,9 +100,9 @@ int main(int argc, char **argv)
   char **args;
   char *pArr;
   args = parse();
-
-  printf("args in main 0 = %s\n", args[0]);
-  printf("args in main 1 = %s\n", args[1]);
+  printf("returned home\n");
+  // printf("args in main 0 = %s\n", args[0]);
+  // printf("args in main 1 = %s\n", args[1]);
   execute(args);
 
 }

@@ -1,5 +1,4 @@
 /**
-MyShell.C
 Jeremy Manandic
 **/
 
@@ -20,7 +19,24 @@ prompt.
 */
 int execute(char **args)
 {
-
+  printf("MYSHELL (pid:%d)\n", (int) getpid());
+    int rc = fork();
+    if (rc < 0) {
+        // fork failed; exit
+        fprintf(stderr, "fork failed\n");
+        exit(1);
+    } else if (rc == 0) {
+        // child (new process)
+        printf("hello, I am child (pid:%d)\n", (int) getpid());
+        execvp(*args, args);  // runs word count
+        printf("this shouldn't print out");
+    } else {
+        // parent goes down this path (original process)
+        int wc = wait(NULL);
+        printf("hello, I am parent of %d (wc:%d) (pid:%d)\n",
+	       rc, wc, (int) getpid());
+    }
+return 0;
 }
 /**
 @brief gets the input from the prompt and splits it into tokens.
@@ -29,32 +45,29 @@ Prepares the arguments for execvp
 */
 char** parse(void)
 {
-  char *args[10];
+  char **args;
+  args = (char **) malloc(3);
+  args[0] = (char *) malloc(100);
+  args[1] = (char *) malloc(100);
+  args[2] = (char *) malloc(100);
+
   char lineIn[MAXCHAR];
-  char *token;
-  char **ptrArgs;
-  int i = 0;
-  //get input
+
   printf("MyShell>");
+
   fgets(lineIn, MAXCHAR, stdin);
-  printf("the string: %s\n", lineIn);
 
-  args[i] = strtok(lineIn, " ");
-  for (i = 1; i < 10; i++) {
-    args[i] = strtok(NULL, " ");
-    if(args[i] == NULL) {
-      break;
-    }
-  }
+  printf("This is lineIn: %s\n", lineIn);
 
-  printf("approaching seccond while loop\n");
-  for (i = 0; i < 10; i++) {
-    if (args[i] == NULL) {
-      break;
-    }
-    printf("Item %d is %s\n",i,args[i]);
-  }
+  strcpy(args[0],strtok(lineIn, " "));
 
+  printf("args 0 = %s\n", args[0]);
+
+  strcpy(args[1],strtok(NULL, " "));
+
+  printf("args 1 = %s\n", args[1]);
+
+  args[3] = '\0';
 
   return args;
 }
@@ -72,6 +85,8 @@ int main(int argc, char **argv)
   char *pArr;
   args = parse();
 
-
+  printf("args in main 0 = %s\n", args[0]);
+  printf("args in main 1 = %s\n", args[1]);
+  execute(args);
 
 }

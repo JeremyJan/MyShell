@@ -1,14 +1,17 @@
 /**
 Jeremy Manandic
+TCSS422
+MyShell.c
 **/
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 #include <sys/wait.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
 
-#define MAXCHAR 255
+#define MAX_ARGS 20
+#define BUF 255
 
 /**
 @brief Fork a child to execute the command using execvp. The parent
@@ -16,77 +19,78 @@ should wait for the child to terminate
 @param args Null terminated list of arguments (including program).
 @return returns 1, to continue execution and 0 to terminate the MyShell
 prompt.
+Function code was inspired by the example textbook code in chapter 5
 */
-int execute(char **args)
-{
-  printf("args in exe 0 = %s\n", args[0]);
-  printf("args in exe 1 = %s\n", args[1]);
-
-  printf("MYSHELL (pid:%d)\n", (int) getpid());
-    int rc = fork();
-    if (rc < 0) {
-        // fork failed; exit
-        fprintf(stderr, "fork failed\n");
-        exit(1);
-    } else if (rc == 0) {
-        // child (new process)
-        printf("hello, I am child (pid:%d)\n", (int) getpid());
-        execvp(*args, args);  // runs word count
-        printf("this shouldn't print out");
-    } else {
-        // parent goes down this path (original process)
-        int wc = wait(NULL);
-        printf("hello, I am parent of %d (wc:%d) (pid:%d)\n",
-	       rc, wc, (int) getpid());
-    }
-return 0;
+int execute(char **args) {
+	int exeExit = 1;
+	int rc = fork();
+	if (args[0] == NULL) {
+		exeExit = 1;
+	}
+	if (strcmp(args[0], "exit") == 0) {
+		exeExit = 0;
+	} else {
+		if (rc < 0) {
+			fprintf(stderr, "fork failed\n");
+			exit(1);
+		} else if (rc == 0) {
+		  execvp(args[0], args);
+			printf("error executing command...\n");
+			exit(1);
+		 } else {
+		  int wc = wait(NULL);
+		 }
+	}
+	 return exeExit;
 }
+
 /**
 @brief gets the input from the prompt and splits it into tokens.
 Prepares the arguments for execvp
 @return returns char** args to be used by execvp
 */
-char** parse(void)
-{
-  char **args;
-  args = (char **) malloc(64);
-  // args[0] = (char *) malloc(100);
-  // args[1] = (char *) malloc(100);
-  // args[2] = (char *) malloc(100);
-  //
-  char lineIn[MAXCHAR];
-  //
-  printf("MyShell>");
-  //
-  fgets(lineIn, MAXCHAR, stdin);
-  //
-  printf("This is lineIn: %s\n", lineIn);
-  //
-  // args[0] = strdup(strtok(lineIn, " "));
-  //
-  // printf("args 0 = %s\n", args[0]);
-  //
-  // args[1] = strdup(strtok(NULL, " "));
-  //
-  // printf("args 1 = %s\n", args[1]);
-  //
-  // args[2] = NULL;
-  int i = 0;
-  char *p = strtok(lineIn, " ");
-  while(p) {
-    args[i++] = strdup(p);
-    p = strtok(NULL, " ");
-  }
+char** parse(void) {
+	char lineIn[BUF];
+	char *token;
+	char **args = (char**) malloc(MAX_ARGS * sizeof(char));;
+	int i, j;
+	if (args != NULL) {
 
-  args[i] = NULL;
+		for (j = 0; j < MAX_ARGS; j++)
+		{
+			args[j] = (char *) malloc(BUF * sizeof(char));
+		}
+	}
 
-  for (i = 0; i < 2; i++) {
-    printf("%s\n", args[i]);
-  }
+	printf("MyShell>");
 
-  printf("about to return");
-  return args;
+	fgets(lineIn, BUF, stdin);
+	if (lineIn[0] == '\n') {
+		strcpy(args[0], " ");
+
+	} else {
+		strcpy(args[0], strtok(lineIn, " \n"));
+		i = 1;
+		while((token = strtok(NULL, " \n")) != NULL) {
+			strcpy(args[i], token);
+			i++;
+		}
+		if (i > 0) {
+			args[i] = '\0';
+		}
+	}
+
+	return args;
 }
+
+/*
+@brief This function free up memory from the malloc used. (Most likely did
+incorrectly but I tried)
+*/
+void freeMem(char **args) {
+	free(args);
+}
+
 /**
 @brief Main function should run infinitely until terminated manually
 using CTRL+C or typing in the exit command
@@ -95,14 +99,17 @@ It should call the parse() and execute() functions
 @param argv Argument vector.
 @return status code
 */
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
-  char **args;
-  char *pArr;
-  args = parse();
-  printf("returned home\n");
-  // printf("args in main 0 = %s\n", args[0]);
-  // printf("args in main 1 = %s\n", args[1]);
-  execute(args);
-
+	char **args;
+	int exeExit = 1;
+	while (exeExit) {
+		args = parse();
+		if (strcmp(args[0], " ") == 0) {
+		}  else {
+			exeExit = execute(args);
+		}
+		freeMem(args);
+	}
+	return EXIT_SUCCESS;
 }
